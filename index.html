@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Anti-AI | Earn Money</title>
+  <title>Anti-AI | Qwen Earn Money</title>
   <link rel="icon" href="favicon.ico" type="image/x-icon">
   <style>
     :root {
@@ -41,10 +41,11 @@
     h1 img { width: 24px; height: 24px; filter: drop-shadow(0 0 8px rgba(255,215,0,0.6)); animation: float 4s ease-in-out infinite; }
     @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-3px)} }
     .hdr-actions { display: flex; gap: 8px; }
-    #langBtn, #guideBtn, #refreshBtn { background: var(--glass); border: 1px solid rgba(255,255,255,0.2); padding: 6px 10px; border-radius: 8px; color: var(--text); cursor: pointer; font-weight: bold; transition: var(--transition); font-size: 0.8rem; }
-    #langBtn:hover, #guideBtn:hover, #refreshBtn:hover { border-color: var(--gold); box-shadow: 0 0 15px rgba(255,215,0,0.4); }
+    #langBtn, #guideBtn, #refreshBtn, #voiceBtn { background: var(--glass); border: 1px solid rgba(255,255,255,0.2); padding: 6px 10px; border-radius: 8px; color: var(--text); cursor: pointer; font-weight: bold; transition: var(--transition); font-size: 0.8rem; }
+    #langBtn:hover, #guideBtn:hover, #refreshBtn:hover, #voiceBtn:hover { border-color: var(--gold); box-shadow: 0 0 15px rgba(255,215,0,0.4); }
     #refreshBtn.loading { animation: spin 1s linear infinite; }
     @keyframes spin { 100%{transform:rotate(360deg)} }
+    #voiceBtn.active { background: rgba(255,215,0,0.2); border-color: var(--gold); color: var(--gold); box-shadow: 0 0 10px rgba(255,215,0,0.3); }
 
     /* TABS */
     .tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; position: relative; z-index: 2; }
@@ -139,7 +140,7 @@
     <img src="assets/images/hero-money.png" alt="Earn Money with AI" class="hero-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
     <div class="hero-fallback" style="display:none;">
       <p style="font-size:2rem; margin-bottom:8px;">💰</p>
-      <p>Anti-AI Earn Money</p>
+      <p>Anti-AI Qwen Earn Money</p>
       <p style="font-size:0.75rem;">Save images to <code>assets/images/</code></p>
     </div>
 
@@ -157,6 +158,7 @@
     <div class="hdr-actions" style="justify-content:center; margin-top:12px;">
       <button id="guideBtn" onclick="openModal('guideModal')">📖 <span data-i18n="guide_btn">План 30 дней</span></button>
       <button id="refreshBtn" onclick="forceRefreshJobs()" title="Обновить вакансии">🔄</button>
+      <button id="voiceBtn" onclick="toggleVoice()" title="Вкл/Выкл озвучку">🔇</button>
       <button id="langBtn" onclick="toggleLang()">🌐 EN</button>
     </div>
   </div>
@@ -393,6 +395,74 @@ const i18n = {
   }
 };
 
+// ========== 🔊 ROBUST VOICE SYSTEM ==========
+let synth = window.speechSynthesis;
+let voices = [];
+let voiceEnabled = localStorage.getItem('ai_earn_voice') === 'true';
+let currentVoice = null;
+
+// 1. Load Voices
+function loadVoices() {
+  voices = synth.getVoices();
+  if (voices.length > 0 && !currentVoice) {
+    const langCode = currentLang === 'ru' ? 'ru' : 'en';
+    currentVoice = voices.find(v => v.lang.startsWith(langCode)) || voices.find(v => v.lang.includes('ru')) || voices[0];
+    console.log('🗣 Voice loaded:', currentVoice.name);
+  }
+}
+// Chrome loads voices asynchronously
+if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = loadVoices;
+setTimeout(loadVoices, 200); // Fallback for slow loading
+
+// 2. Unlock Audio (CRITICAL FOR CHROME/SAFARI)
+// Browsers block speech until the user interacts with the page.
+document.body.addEventListener('click', function unlock() {
+  if (!voiceEnabled) {
+    voiceEnabled = true;
+    localStorage.setItem('ai_earn_voice', 'true');
+    updateVoiceButton();
+    // Speak a welcome message once unlocked
+    if(voices.length > 0) speak("Озвучка включена", true);
+  }
+}, { once: true });
+
+// 3. Speak Function
+function speak(text, priority = false) {
+  if (!voiceEnabled) return;
+  if (voices.length === 0) { voices = synth.getVoices(); loadVoices(); }
+  if (!currentVoice) return; // No voice available yet
+
+  if (priority) synth.cancel();
+  
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.voice = currentVoice;
+  utterance.rate = 1.05;
+  utterance.pitch = 1.0;
+  utterance.lang = currentLang === 'ru' ? 'ru-RU' : 'en-US';
+  
+  synth.speak(utterance);
+  console.log("🗣 Speaking:", text);
+}
+
+function updateVoiceButton() {
+  const btn = document.getElementById('voiceBtn');
+  if(btn) {
+    btn.textContent = voiceEnabled ? '🔊' : '🔇';
+    btn.classList.toggle('active', voiceEnabled);
+    btn.title = voiceEnabled ? "Выключить озвучку" : "Включить озвучку (Нажмите на страницу)";
+  }
+}
+
+function toggleVoice() {
+  voiceEnabled = !voiceEnabled;
+  localStorage.setItem('ai_earn_voice', voiceEnabled);
+  updateVoiceButton();
+  if(voiceEnabled) {
+    if(voices.length === 0) voices = synth.getVoices();
+    speak(currentLang === 'ru' ? "Озвучка включена" : "Voice enabled", true);
+  }
+}
+
 // ========== 🧠 STATE ==========
 let currentLang = localStorage.getItem('ai_earn_lang') || 'ru';
 let skills = JSON.parse(localStorage.getItem('ai_earn_skills')) || DATA.skills;
@@ -412,14 +482,12 @@ async function fetchLiveJobs() {
   const now = Date.now();
   const fiveMinutes = 5 * 60 * 1000;
   
-  // Check if cache is fresh
   if(now - lastUpdateTime < fiveMinutes && cachedJobs.length > 0) {
     renderJobs(cachedJobs);
     updateLastUpdate();
     return;
   }
   
-  // Show loading
   document.getElementById('jobsContainer').innerHTML = `
     <div class="loading-skeleton"></div>
     <div class="loading-skeleton"></div>
@@ -427,7 +495,6 @@ async function fetchLiveJobs() {
   `;
   
   try {
-    // Try multiple sources
     const jobs = await Promise.race([
       fetchGitHubJobs(),
       fetchMockAPI(),
@@ -438,6 +505,7 @@ async function fetchLiveJobs() {
       cachedJobs = jobs;
       lastUpdateTime = now;
       saveState();
+      speak(currentLang === 'ru' ? `Загружено ${jobs.length} вакансий` : `Loaded ${jobs.length} jobs`, true);
     }
     
     renderJobs(cachedJobs);
@@ -450,29 +518,25 @@ async function fetchLiveJobs() {
 }
 
 async function fetchGitHubJobs() {
-  const response = await fetch('https://jobs.github.com/positions.json?search=ai+machine+learning&pages=1');
-  const data = await response.json();
-  return data.slice(0, 5).map(job => ({
-    title: job.title,
-    company: job.company,
-    salary: job.salary || "Negotiable",
-    location: job.location,
-    tags: job.tags || [],
-    type: job.type.toLowerCase(),
-    posted: timeAgo(new Date(job.created_at)),
-    url: job.url
-  }));
+  // Note: GitHub Jobs API is deprecated but still works for demo. Fallback is built-in.
+  try {
+    const response = await fetch('https://jobs.github.com/positions.json?search=ai+machine+learning&pages=1');
+    const data = await response.json();
+    return data.slice(0, 5).map(job => ({
+      title: job.title,
+      company: job.company,
+      salary: job.salary || "Negotiable",
+      location: job.location,
+      tags: job.tags || [],
+      type: job.type.toLowerCase(),
+      posted: timeAgo(new Date(job.created_at)),
+      url: job.url
+    }));
+  } catch(e) { return null; }
 }
 
-async function fetchMockAPI() {
-  // Fallback mock API
-  return STATIC_JOBS;
-}
-
-function timeout(ms) {
-  return new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), ms));
-}
-
+async function fetchMockAPI() { return STATIC_JOBS; }
+function timeout(ms) { return new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), ms)); }
 function timeAgo(date) {
   const seconds = Math.floor((new Date() - date) / 1000);
   let interval = Math.floor(seconds / 31536000);
@@ -487,7 +551,6 @@ function timeAgo(date) {
   if(interval >= 1) return interval + " мин назад";
   return "Только что";
 }
-
 function updateLastUpdate() {
   const indicator = document.getElementById('lastUpdate');
   if(lastUpdateTime > 0) {
@@ -497,11 +560,10 @@ function updateLastUpdate() {
     indicator.textContent = 'Офлайн режим';
   }
 }
-
 function forceRefreshJobs() {
   const btn = document.getElementById('refreshBtn');
   btn.classList.add('loading');
-  lastUpdateTime = 0; // Force refresh
+  lastUpdateTime = 0;
   fetchLiveJobs().then(() => btn.classList.remove('loading'));
 }
 
@@ -511,20 +573,29 @@ function applyLang() {
   document.querySelectorAll('[data-i18n]').forEach(el => { el.innerHTML = t(el.getAttribute('data-i18n')); });
   document.getElementById('langBtn').textContent = currentLang === 'ru' ? '🌐 EN' : '🌐 RU';
   renderJobs(cachedJobs); renderSkills(); renderChecklist(); renderPlan();
+  loadVoices(); 
 }
-function toggleLang() { currentLang = currentLang==='ru'?'en':'ru'; localStorage.setItem('ai_earn_lang',currentLang); applyLang(); }
+function toggleLang() { 
+  currentLang = currentLang==='ru'?'en':'ru'; 
+  localStorage.setItem('ai_earn_lang',currentLang); 
+  applyLang(); 
+  speak(currentLang === 'ru' ? 'Язык изменён на русский' : 'Language switched to English', true);
+}
 function switchTab(id) {
   document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   document.querySelector(`.tab-btn[data-tab="${id}"]`).classList.add('active');
+  
+  const tabNames = { jobs: currentLang==='ru'?'Вакансии':'Jobs', skills: currentLang==='ru'?'Навыки':'Skills', scam: currentLang==='ru'?'Анти-скам':'Anti-Scam', plan: currentLang==='ru'?'План':'Plan' };
+  speak(tabNames[id], true);
 }
 
 function renderJobs(jobs) {
   const box = document.getElementById('jobsContainer');
   const countEl = document.getElementById('jobsCount');
   box.innerHTML = '';
-  countEl.textContent = `${jobs.length} вакансий`;
+  countEl.textContent = `${jobs.length} ${currentLang==='ru'?'вакансий':'jobs'}`;
   
   jobs.forEach(job => {
     const tagsHtml = (job.tags || []).map(tag => `<span class="salary-tag">${tag}</span>`).join('');
@@ -588,6 +659,7 @@ function addSkill(type) {
     skills[idx].level = Math.min(100, skills[idx].level + 10);
     saveState(); renderSkills();
     updateSkillBars();
+    speak(`${skills[idx].name}: ${skills[idx].level}%`);
   }
 }
 
@@ -622,14 +694,16 @@ function checkScam() {
     title.textContent = t('scam_safe');
     title.style.color = 'var(--success)';
     box.innerHTML = `<span class="risk-badge safe">${t('scam_safe')}</span>`;
-    analysis.textContent = 'Вакансия выглядит безопасно. Но всё равно проверьте компанию!';
+    analysis.textContent = currentLang==='ru' ? 'Вакансия выглядит безопасно. Но всё равно проверьте компанию!' : 'Looks safe. Still verify the company!';
+    speak(t('scam_safe'), true);
   } else {
     title.textContent = riskLevel === 'danger' ? t('scam_danger') : t('scam_warning');
     title.style.color = riskLevel === 'danger' ? 'var(--danger)' : 'var(--warning)';
     risks.forEach(r => {
       box.innerHTML += `<span class="risk-badge ${r.risk==='high'?'high':'med'}">${r.text}</span>`;
     });
-    analysis.textContent = `Найдено ${risks.length} красных флагов. Будьте осторожны!`;
+    analysis.textContent = currentLang==='ru' ? `Найдено ${risks.length} красных флагов. Будьте осторожны!` : `Found ${risks.length} red flags. Be careful!`;
+    speak(title.textContent, true);
   }
   
   document.getElementById('scamResult').style.display = 'block';
@@ -638,12 +712,14 @@ function checkScam() {
 function clearScam() {
   document.getElementById('scamInput').value = '';
   document.getElementById('scamResult').style.display = 'none';
+  speak(currentLang==='ru'?'Очищено':'Cleared');
 }
 
 // ========== 📅 PLAN TRACKER ==========
 function toggleDay(idx) {
   plan[idx].done = !plan[idx].done;
   saveState(); renderPlan();
+  if(plan[idx].done) speak(currentLang==='ru'?'Задание выполнено':'Task completed');
 }
 
 function markDayComplete() {
@@ -651,31 +727,38 @@ function markDayComplete() {
   if(undone !== -1) {
     plan[undone].done = true;
     saveState(); renderPlan();
+    speak(currentLang==='ru'?'Прогресс сохранён':'Progress saved');
   }
 }
 
 function resetPlan() {
-  if(confirm('Сбросить весь прогресс?')) {
+  if(confirm(currentLang==='ru'?'Сбросить весь прогресс?':'Reset all progress?')) {
     plan = DATA.dayPlan.map(d => ({...d, done: false}));
     saveState(); renderPlan();
+    speak(currentLang==='ru'?'План сброшен':'Plan reset');
   }
 }
 
 function showQuickStart() {
-  alert('1. Откройте вкладку 📚 Навыки\n2. Начните с Python (кнопка + Python)\n3. Изучайте по 10% в день\n4. Через 10 дней — первый проект!');
+  const msg = currentLang==='ru' 
+    ? '1. Откройте вкладку Навыки\n2. Начните с Python\n3. Изучайте по 10% в день\n4. Через 10 дней — первый проект!'
+    : '1. Open Skills tab\n2. Start with Python\n3. Learn 10% daily\n4. In 10 days - first project!';
+  alert(msg);
+  speak(msg.replace(/\n/g, '. '));
 }
 
 // ========== UTILS ==========
-function copyPhone() { navigator.clipboard.writeText('89202275676').then(()=>alert(t('scam_safe'))); }
-function openModal(id) { document.getElementById(id).classList.add('open'); }
+function copyPhone() { navigator.clipboard.writeText('89202275676').then(()=>speak(currentLang==='ru'?'Скопировано':'Copied')); }
+function openModal(id) { document.getElementById(id).classList.add('open'); speak(currentLang==='ru'?'Открыт гид':'Guide opened'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
 // ========== 🚀 INIT ==========
 document.addEventListener('DOMContentLoaded', ()=>{
   applyLang();
+  updateVoiceButton();
   updateSkillBars();
-  fetchLiveJobs(); // Fetch jobs on load
-  setInterval(fetchLiveJobs, 5 * 60 * 1000); // Auto-refresh every 5 minutes
+  fetchLiveJobs();
+  setInterval(fetchLiveJobs, 5 * 60 * 1000);
   document.querySelectorAll('.tab-btn').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
 });
 </script>
