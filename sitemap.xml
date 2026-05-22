@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+
+  <!-- Главная страница -->
+  <url>
+    <loc>https://anti-ai-qwen-earn-money.vercel.app/</loc>
+    <lastmod>2026-05-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    
+    <!-- Локализация -->
+    <xhtml:link rel="alternate" hreflang="ru" href="https://anti-ai-qwen-earn-money.vercel.app/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://anti-ai-qwen-earn-money.vercel.app/"/>
+    
+    <!-- Изображения для превью -->
+    <image:image>
+      <image:loc>https://anti-ai-qwen-earn-money.vercel.app/assets/images/hero-money.png</image:loc>
+      <image:title>Anti-AI Qwen Earn Money — Заработок с ИИ</image:title>
+      <image:caption>Live вакансии, детектор скама, план обучения</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://anti-ai-qwen-earn-money.vercel.app/assets/images/jobs-qwen.png</image:loc>
+      <image:title>Вакансии Qwen AI</image:title>
+      <image:caption>Актуальные позиции с автообновлением</image:caption>
+    </image:image>
+  </url>
+
+  <!-- Ссылка на каталог всех проектов Анти-ИИ -->
+  <url>
+    <loc>https://ancf-hue.github.io/</loc>
+    <lastmod>2026-05-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://ancf-hue.github.io/"/>
+  </url>
+
+</urlset>

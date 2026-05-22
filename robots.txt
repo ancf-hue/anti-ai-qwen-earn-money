@@ -1,0 +1,50 @@
+# robots.txt для Anti-AI Qwen Earn Money
+# https://anti-ai-qwen-earn-money.vercel.app/
+
+# ✅ Разрешаем индексацию всем ботам
+User-agent: *
+Allow: /
+
+# ✅ Разрешаем главную страницу и основные разделы
+Allow: /index.html
+Allow: /assets/
+
+# ❌ Блокируем служебные и потенциально чувствительные пути
+Disallow: /api/
+Disallow: /admin/
+Disallow: /private/
+Disallow: /logs/
+Disallow: /tmp/
+Disallow: /*.json$
+Disallow: /*.log$
+Disallow: /*.tmp$
+Disallow: /assets/images/originals/
+
+# 🗺️ Указываем путь к карте сайта
+Sitemap: https://anti-ai-qwen-earn-money.vercel.app/sitemap.xml
+
+# ⏱ Задержка для вежливого краулинга (опционально)
+Crawl-delay: 1
+
+# 🤖 Специфичные правила для крупных поисковиков
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 2
+
+User-agent: Yandex
+Allow: /
+Crawl-delay: 2
+
+User-agent: bingbot
+Allow: /
+Crawl-delay: 2
+
+# 🚫 Блокируем агрессивных ботов
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
