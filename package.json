@@ -1,0 +1,5 @@
+{
+  "scripts": {
+    "predeploy": "node scripts/update-sitemap.js"
+  }
+}
