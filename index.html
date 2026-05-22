@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Anti-AI | Earn Money</title>
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <style>
+    :root {
+      --bg: #0a0c14; --surface: rgba(20,24,36,0.88); --glass: rgba(255,255,255,0.06);
+      --text: #e6eaf0; --muted: #8a92a6;
+      --accent: #00d4ff; --accent-glow: rgba(0,212,255,0.4);
+      --success: #2ecc71; --warning: #f39c12; --danger: #e74c3c; --gold: #ffd700;
+      --font: system-ui, -apple-system, "Segoe UI", monospace;
+      --radius: 14px; --transition: 0.25s cubic-bezier(0.4,0,0.2,1);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; display: flex; justify-content: center; padding: 16px; }
+    #app { width: 100%; max-width: 780px; background: var(--surface); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.12); border-radius: var(--radius); box-shadow: 0 12px 40px rgba(0,0,0,0.6); padding: 20px; display: flex; flex-direction: column; gap: 16px; position: relative; overflow: hidden; }
+    #app::before { content: ''; position: absolute; top: -30%; left: -20%; width: 140%; height: 140%; background: radial-gradient(circle at 20% 20%, rgba(0,212,255,0.09), transparent 50%), radial-gradient(circle at 80% 80%, rgba(255,215,0,0.09), transparent 50%); pointer-events: none; z-index: 0; }
+
+    /* HERO */
+    .hero-section { text-align: center; padding: 10px 0 16px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .hero-image { max-width: 100%; height: auto; border-radius: 12px; box-shadow: 0 8px 32px rgba(255,215,0,0.2); margin: 12px 0; border: 1px solid rgba(255,255,255,0.1); }
+    .hero-fallback { padding: 30px; background: rgba(0,0,0,0.3); border-radius: 12px; margin: 12px 0; color: var(--muted); }
+    .money-badge { display: inline-block; padding: 6px 16px; background: linear-gradient(135deg, var(--gold), #ffed4e); color: #000; border-radius: 20px; font-weight: bold; margin: 8px 4px; font-size: 0.85rem; }
+    .update-indicator { display: inline-flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--success); margin-top: 8px; }
+    .update-indicator.live::before { content: ''; width: 8px; height: 8px; background: var(--success); border-radius: 50%; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    /* CONCEPT GALLERY */
+    .concept-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 12px; }
+    .concept-card { background: rgba(0,0,0,0.3); border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); transition: var(--transition); }
+    .concept-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(255,215,0,0.25); border-color: var(--gold); }
+    .concept-card img { width: 100%; height: auto; display: block; }
+    .concept-caption { padding: 10px; font-size: 0.8rem; color: var(--muted); text-align: center; font-weight: 600; }
+
+    /* HEADER */
+    header { display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 2; }
+    h1 { font-size: 1.3rem; background: linear-gradient(90deg, var(--gold), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: flex; align-items: center; gap: 10px; }
+    h1 img { width: 24px; height: 24px; filter: drop-shadow(0 0 8px rgba(255,215,0,0.6)); animation: float 4s ease-in-out infinite; }
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-3px)} }
+    .hdr-actions { display: flex; gap: 8px; }
+    #langBtn, #guideBtn, #refreshBtn { background: var(--glass); border: 1px solid rgba(255,255,255,0.2); padding: 6px 10px; border-radius: 8px; color: var(--text); cursor: pointer; font-weight: bold; transition: var(--transition); font-size: 0.8rem; }
+    #langBtn:hover, #guideBtn:hover, #refreshBtn:hover { border-color: var(--gold); box-shadow: 0 0 15px rgba(255,215,0,0.4); }
+    #refreshBtn.loading { animation: spin 1s linear infinite; }
+    @keyframes spin { 100%{transform:rotate(360deg)} }
+
+    /* TABS */
+    .tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; position: relative; z-index: 2; }
+    .tab-btn { flex: 1; padding: 10px; background: var(--glass); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: var(--muted); font-weight: 600; cursor: pointer; transition: var(--transition); white-space: nowrap; }
+    .tab-btn.active { background: rgba(255,215,0,0.15); border-color: var(--gold); color: var(--gold); box-shadow: 0 0 20px rgba(255,215,0,0.2); }
+
+    /* CONTENT */
+    .tab-content { display: none; flex-direction: column; gap: 12px; position: relative; z-index: 2; animation: fadeIn 0.3s ease; max-height: 55vh; overflow-y: auto; padding-right: 4px; }
+    .tab-content.active { display: flex; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+    .tab-content::-webkit-scrollbar { width: 6px; }
+    .tab-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
+
+    .card { background: rgba(0,0,0,0.35); padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); transition: var(--transition); }
+    .card:hover { border-color: rgba(255,215,0,0.3); }
+    .card h3 { color: var(--gold); margin-bottom: 6px; font-size: 0.9rem; display: flex; align-items: center; gap: 6px; }
+    .card p, .card li { font-size: 0.82rem; color: var(--muted); line-height: 1.5; }
+    .card ul, .card ol { padding-left: 18px; margin-top: 4px; }
+    .card li { margin-bottom: 4px; }
+    .card-img { width: 100%; border-radius: 8px; margin: 10px 0; border: 1px solid rgba(255,255,255,0.08); }
+
+    .salary-tag { display: inline-block; padding: 3px 10px; background: rgba(46,204,113,0.2); border: 1px solid var(--success); border-radius: 12px; font-size: 0.75rem; color: var(--success); margin: 2px; }
+    .scam-tag { display: inline-block; padding: 3px 10px; background: rgba(231,76,60,0.2); border: 1px solid var(--danger); border-radius: 12px; font-size: 0.75rem; color: var(--danger); margin: 2px; }
+    .remote-tag { display: inline-block; padding: 3px 10px; background: rgba(0,212,255,0.2); border: 1px solid var(--accent); border-radius: 12px; font-size: 0.75rem; color: var(--accent); margin: 2px; }
+
+    /* FORMS */
+    input, textarea, select { width: 100%; padding: 10px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: var(--text); font-family: var(--font); outline: none; transition: var(--transition); }
+    input:focus, textarea:focus, select:focus { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(255,215,0,0.2); }
+    textarea { min-height: 60px; resize: vertical; }
+
+    /* BUTTONS */
+    .btn { padding: 10px 14px; background: linear-gradient(135deg, var(--gold), #ffed4e); color: #000; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; transition: var(--transition); box-shadow: 0 4px 15px rgba(255,215,0,0.3); display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(255,215,0,0.5); }
+    .btn.secondary { background: var(--glass); color: var(--text); border: 1px solid rgba(255,255,255,0.2); box-shadow: none; }
+    .btn.danger { background: linear-gradient(135deg, var(--danger), #c0392b); color: #fff; }
+    .btn-group { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+
+    /* SKILL BARS */
+    .skill-item { margin: 10px 0; }
+    .skill-label { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px; }
+    .skill-bar { height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; }
+    .skill-fill { height: 100%; background: linear-gradient(90deg, var(--gold), var(--accent)); width: 0%; transition: width 0.8s ease; }
+
+    /* JOB CARDS */
+    .job-card { background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; margin: 8px 0; border-left: 3px solid var(--gold); transition: var(--transition); }
+    .job-card:hover { transform: translateX(4px); background: rgba(255,215,0,0.05); }
+    .job-title { font-weight: bold; color: var(--gold); margin-bottom: 4px; }
+    .job-meta { font-size: 0.75rem; color: var(--muted); display: flex; gap: 12px; margin-top: 6px; flex-wrap: wrap; }
+    .job-company { color: var(--accent); }
+    .loading-skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%); background-size: 200% 100%; animation: loading 1.5s infinite; border-radius: 8px; height: 80px; margin: 8px 0; }
+    @keyframes loading { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+    /* CHECKLIST */
+    .checklist-item { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.06); align-items: flex-start; }
+    .checklist-item input { margin-top: 4px; accent-color: var(--gold); width: 18px; height: 18px; }
+    .checklist-item label { cursor: pointer; flex: 1; transition: var(--transition); }
+    .checklist-item.completed label { text-decoration: line-through; color: var(--muted); opacity: 0.7; }
+
+    /* SUPPORT */
+    .support { text-align: center; padding: 14px; background: linear-gradient(135deg, rgba(255,215,0,0.1), rgba(0,212,255,0.1)); border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); margin-top: auto; position: relative; z-index: 2; }
+    .support h3 { color: var(--gold); margin-bottom: 8px; }
+    .support p { font-size: 0.85rem; color: var(--muted); margin-bottom: 6px; }
+    .phone-box { background: rgba(0,0,0,0.3); padding: 6px 10px; border-radius: 6px; display: inline-block; margin: 4px 0; }
+    .catalog-link { color: var(--accent); text-decoration: none; font-weight: bold; display: block; margin-top: 4px; }
+    footer { text-align: center; color: var(--muted); font-size: 0.7rem; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.08); margin-top: 8px; position: relative; z-index: 2; }
+
+    /* MODAL */
+    .modal { position: fixed; inset: 0; background: rgba(2,2,8,0.92); backdrop-filter: blur(8px); display: none; justify-content: center; align-items: center; z-index: 100; padding: 20px; }
+    .modal.open { display: flex; }
+    .modal-content { background: var(--surface); padding: 24px; border-radius: 16px; border: 1px solid rgba(255,215,0,0.3); max-width: 500px; width: 100%; max-height: 85vh; overflow-y: auto; position: relative; }
+    .modal-close { position: absolute; top: 12px; right: 12px; background: none; border: none; color: var(--muted); font-size: 1.2rem; cursor: pointer; }
+    .modal-image { max-width: 100%; border-radius: 8px; margin: 12px 0; }
+
+    @media(max-width:480px) {
+      #app { padding: 14px; }
+      h1 { font-size: 1.1rem; }
+      .tab-btn { padding: 8px; font-size: 0.75rem; }
+      .card { padding: 10px; }
+      .btn { padding: 8px 10px; font-size: 0.8rem; }
+      .concept-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<main id="app">
+  <!-- ========== HERO SECTION ========== -->
+  <div class="hero-section">
+    <h1><img src="favicon.ico" alt="💰" onerror="this.style.display='none'"> <span data-i18n="title">Заработать с ИИ</span></h1>
+    <p style="color:var(--muted); font-size:0.85rem; margin-top:4px;">Честные способы • Без скама • Live вакансии</p>
+    
+    <img src="assets/images/hero-money.png" alt="Earn Money with AI" class="hero-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+    <div class="hero-fallback" style="display:none;">
+      <p style="font-size:2rem; margin-bottom:8px;">💰</p>
+      <p>Anti-AI Earn Money</p>
+      <p style="font-size:0.75rem;">Save images to <code>assets/images/</code></p>
+    </div>
+
+    <div style="margin:12px 0;">
+      <span class="money-badge">💵 $500-5000/мес</span>
+      <span class="money-badge">🎓 Без опыта</span>
+      <span class="money-badge">🌍 Удалённо</span>
+    </div>
+
+    <div class="update-indicator live" id="updateIndicator">
+      <span>🔄</span>
+      <span id="lastUpdate">Обновление...</span>
+    </div>
+
+    <div class="hdr-actions" style="justify-content:center; margin-top:12px;">
+      <button id="guideBtn" onclick="openModal('guideModal')">📖 <span data-i18n="guide_btn">План 30 дней</span></button>
+      <button id="refreshBtn" onclick="forceRefreshJobs()" title="Обновить вакансии">🔄</button>
+      <button id="langBtn" onclick="toggleLang()">🌐 EN</button>
+    </div>
+  </div>
+
+  <!-- ========== CONCEPT GALLERY ========== -->
+  <div class="concept-grid">
+    <div class="concept-card">
+      <img src="assets/images/jobs-qwen.png" alt="Qwen Jobs" onerror="this.parentElement.style.display='none'">
+      <div class="concept-caption">💼 Вакансии Qwen</div>
+    </div>
+    <div class="concept-card">
+      <img src="assets/images/skills-needed.png" alt="Skills Needed" onerror="this.parentElement.style.display='none'">
+      <div class="concept-caption">📚 Необходимые навыки</div>
+    </div>
+    <div class="concept-card">
+      <img src="assets/images/scam-detector.png" alt="Scam Detector" onerror="this.parentElement.style.display='none'">
+      <div class="concept-caption">🛡️ Детектор скама</div>
+    </div>
+  </div>
+
+  <!-- ========== TABS ========== -->
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="jobs">💼 <span data-i18n="tab_jobs">Вакансии</span></button>
+    <button class="tab-btn" data-tab="skills">📚 <span data-i18n="tab_skills">Навыки</span></button>
+    <button class="tab-btn" data-tab="scam">🛡️ <span data-i18n="tab_scam">Анти-скам</span></button>
+    <button class="tab-btn" data-tab="plan">📅 <span data-i18n="tab_plan">План</span></button>
+  </nav>
+
+  <!-- ========== 💼 JOBS ========== -->
+  <section id="jobs" class="tab-content active">
+    <div class="card" style="text-align:center;">
+      <h3>🔥 Актуальные вакансии</h3>
+      <img src="assets/images/jobs-qwen.png" alt="Qwen Job Opportunities" class="card-img" onerror="this.style.display='none'">
+      <p style="font-size:0.82rem; color:var(--muted); margin-top:8px;">
+        <b id="jobsCount">Загрузка...</b> • Автообновление каждые 5 минут
+      </p>
+    </div>
+    
+    <div id="jobsContainer">
+      <div class="loading-skeleton"></div>
+      <div class="loading-skeleton"></div>
+      <div class="loading-skeleton"></div>
+    </div>
+    
+    <div class="card" style="border-color:var(--success); background:rgba(46,204,113,0.05);">
+      <h3 style="color:var(--success);">💡 Быстрый старт</h3>
+      <p>Не требуется опыт работы в Qwen. Начните с фриланса и обучения.</p>
+      <button class="btn secondary" style="margin-top:8px; font-size:0.8rem;" onclick="showQuickStart()">🚀 Начать сейчас</button>
+    </div>
+  </section>
+
+  <!-- ========== 📚 SKILLS ========== -->
+  <section id="skills" class="tab-content">
+    <div class="card" style="text-align:center;">
+      <h3>📊 Что нужно изучить</h3>
+      <img src="assets/images/skills-needed.png" alt="Required Skills" class="card-img" onerror="this.style.display='none'">
+      <p style="font-size:0.82rem; color:var(--muted); margin-top:8px;">
+        От новичка до специалиста за 8 недель
+      </p>
+    </div>
+
+    <div class="card">
+      <h3>🎯 Приоритетные навыки</h3>
+      <div id="skillsContainer"></div>
+    </div>
+
+    <div class="card">
+      <h3>📈 Прогресс обучения</h3>
+      <div class="skill-item">
+        <div class="skill-label"><span>Python</span><span id="skill-python">0%</span></div>
+        <div class="skill-bar"><div class="skill-fill" id="bar-python" style="width:0%"></div></div>
+      </div>
+      <div class="skill-item">
+        <div class="skill-label"><span>AI/ML Basics</span><span id="skill-ai">0%</span></div>
+        <div class="skill-bar"><div class="skill-fill" id="bar-ai" style="width:0%"></div></div>
+      </div>
+      <div class="skill-item">
+        <div class="skill-label"><span>Qwen API</span><span id="skill-qwen">0%</span></div>
+        <div class="skill-bar"><div class="skill-fill" id="bar-qwen" style="width:0%"></div></div>
+      </div>
+      <div class="btn-group">
+        <button class="btn" onclick="addSkill('python')" style="flex:1;">+ Python</button>
+        <button class="btn" onclick="addSkill('ai')" style="flex:1;">+ AI/ML</button>
+        <button class="btn" onclick="addSkill('qwen')" style="flex:1;">+ Qwen</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 🛡️ SCAM DETECTOR ========== -->
+  <section id="scam" class="tab-content">
+    <div class="card" style="text-align:center;">
+      <h3>🚨 Проверка на скам</h3>
+      <img src="assets/images/scam-detector.png" alt="Scam Detection Tool" class="card-img" onerror="this.style.display='none'">
+      <p style="font-size:0.82rem; color:var(--muted); margin-top:8px;">
+        Вставьте текст вакансии — найдём красные флаги
+      </p>
+    </div>
+
+    <div class="card">
+      <textarea id="scamInput" placeholder="Пример: 'Лёгкий заработок 500000₽/день! Вложений не требуется! Переведите 5000₽ для активации аккаунта...'"></textarea>
+      <div class="btn-group">
+        <button class="btn danger" onclick="checkScam()" style="flex:1;" data-i18n="btn_check">🔍 Проверить</button>
+        <button class="btn secondary" onclick="clearScam()" style="flex:1;">🗑️ Очистить</button>
+      </div>
+    </div>
+
+    <div class="card" id="scamResult" style="display:none;">
+      <h3 id="scamTitle">Результат</h3>
+      <div id="scamBadges"></div>
+      <div class="preview-box" id="scamAnalysis" style="margin-top:8px;"></div>
+    </div>
+
+    <div class="card">
+      <h3 data-i18n="checklist_title">✅ Чек-лист безопасности</h3>
+      <div id="safetyCheckList"></div>
+    </div>
+  </section>
+
+  <!-- ========== 📅 30-DAY PLAN ========== -->
+  <section id="plan" class="tab-content">
+    <div class="card">
+      <h3>📅 План на 30 дней</h3>
+      <ol style="padding-left:20px; color:var(--muted); line-height:1.8; font-size:0.82rem;">
+        <li><b>Неделя 1:</b> Основы Python + установка Qwen</li>
+        <li><b>Неделя 2:</b> Первый проект (чат-бот, анализ)</li>
+        <li><b>Неделя 3:</b> Публикация на GitHub + портфолио</li>
+        <li><b>Неделя 4:</b> Подача на вакансии/фриланс</li>
+      </ol>
+    </div>
+
+    <div class="card" id="dayPlanContainer"></div>
+
+    <div class="card" style="border-color:var(--gold); background:rgba(255,215,0,0.05);">
+      <h3 style="color:var(--gold);">🎯 Цель месяца</h3>
+      <p>Получить первый заказ или отклик на вакансию</p>
+      <div class="btn-group">
+        <button class="btn" onclick="markDayComplete()" style="flex:1;">✅ День выполнен</button>
+        <button class="btn secondary" onclick="resetPlan()" style="flex:1;">🔄 Сбросить</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== SUPPORT ========== -->
+  <section class="support">
+    <h3 data-i18n="support_title">🤝 ПОДДЕРЖАТЬ ПРОЕКТ 💙</h3>
+    <p data-i18n="support_desc">Приложение бесплатное. Было и останется.<br>Поддержка разработки:</p>
+    <div class="phone-box"><span id="phoneNum" style="color:var(--gold); font-weight:bold;">8-920-227-56-76</span></div>
+    <button class="btn secondary" style="margin-top:6px; font-size:0.8rem;" onclick="copyPhone()">📋 Копировать</button>
+    <a href="https://ancf-hue.github.io/" target="_blank" class="catalog-link" data-i18n="catalog_link">🌟 Каталог Anti-AI Shield</a>
+  </section>
+
+  <footer data-i18n="footer">Анти-ИИ | 100% офлайн | Честные способы заработка | Live API</footer>
+</main>
+
+<!-- ========== 📖 GUIDE MODAL ========== -->
+<div id="guideModal" class="modal" onclick="if(event.target===this)closeModal('guideModal')">
+  <div class="modal-content">
+    <button class="modal-close" onclick="closeModal('guideModal')">✕</button>
+    <h2 style="color:var(--gold); margin-bottom:12px;">🚀 План 30 дней</h2>
+    
+    <img src="assets/images/30day-plan.png" alt="30 Day Plan" class="modal-image" onerror="this.style.display='none'">
+    
+    <ol style="padding-left:20px; color:var(--muted); line-height:1.8; font-size:0.85rem;">
+      <li><b>Дни 1-7:</b> Установите Python, изучите основы</li>
+      <li><b>Дни 8-14:</b> Создайте первый проект с Qwen</li>
+      <li><b>Дни 15-21:</b> Опубликуйте на GitHub</li>
+      <li><b>Дни 22-30:</b> Откликайтесь на вакансии</li>
+    </ol>
+    <button class="btn" style="margin-top:16px; width:100%; background:linear-gradient(135deg, var(--gold), var(--accent));" onclick="closeModal('guideModal')">Начинаю!</button>
+  </div>
+</div>
+
+<script>
+// ========== 📦 DATA LAYER (Static Fallback) ==========
+const STATIC_JOBS = [
+  { title: "AI/ML Engineer", company: "Alibaba Cloud", salary: "$3000-5000", location: "Remote", tags: ["Python", "PyTorch", "LLM"], type: "full", posted: "2 часа назад" },
+  { title: "Qwen Ambassador", company: "Qwen Community", salary: "Гранты", location: "Global", tags: ["Community", "Open-source"], type: "part", posted: "Сегодня" },
+  { title: "AI Integration Freelance", company: "Various Clients", salary: "$500-2000/project", location: "Remote", tags: ["API", "Integration"], type: "freelance", posted: "Вчера" },
+  { title: "Prompt Engineer", company: "AI Startups", salary: "$1000-3000", location: "Remote", tags: ["Prompting", "Testing"], type: "full", posted: "3 часа назад" },
+  { title: "AI Consultant", company: "SMB", salary: "$100-300/hour", location: "Remote", tags: ["Consulting", "Strategy"], type: "freelance", posted: "Сегодня" }
+];
+
+const DATA = {
+  skills: [
+    { name: "Python Basics", level: 0, max: 100, priority: "high" },
+    { name: "Git & GitHub", level: 0, max: 100, priority: "high" },
+    { name: "Qwen API", level: 0, max: 100, priority: "medium" },
+    { name: "Machine Learning", level: 0, max: 100, priority: "medium" },
+    { name: "Prompt Engineering", level: 0, max: 100, priority: "high" },
+    { name: "Project Portfolio", level: 0, max: 100, priority: "high" }
+  ],
+  scamPatterns: [
+    { pattern: /лёгкий заработок|быстрые деньги/i, risk: "high", text: "Обещание лёгких денег" },
+    { pattern: /переведите деньги|взнос|активация/i, risk: "high", text: "Требование предоплаты" },
+    { pattern: /500000|1000000|миллион/i, risk: "medium", text: "Нереалистичный доход" },
+    { pattern: /вложений не требуется|без опыта/i, risk: "medium", text: "Слишком хорошо, чтобы быть правдой" },
+    { pattern: /срочно|только сегодня/i, risk: "medium", text: "Давление времени" }
+  ],
+  safetyChecklist: [
+    {id:"sc1", ru:"Проверил компанию на LinkedIn/HH.ru", en:"Checked company on LinkedIn"},
+    {id:"sc2", ru:"Нет требования предоплаты", en:"No upfront payment required"},
+    {id:"sc3", ru:"Есть официальный договор", en:"Official contract available"},
+    {id:"sc4", ru:"Реалистичная зарплата", en:"Realistic salary"},
+    {id:"sc5", ru:"Проверил отзывы о работодателе", en:"Checked employer reviews"}
+  ],
+  dayPlan: [
+    { day: 1, task: "Установить Python 3.11+", done: false },
+    { day: 2, task: "Изучить основы синтаксиса", done: false },
+    { day: 3, task: "Установить Qwen локально", done: false },
+    { day: 7, task: "Создать первый скрипт", done: false },
+    { day: 14, task: "Завершить мини-проект", done: false },
+    { day: 21, task: "Опубликовать на GitHub", done: false },
+    { day: 30, task: "Отправить 10 откликов", done: false }
+  ]
+};
+
+// ========== 🌍 I18N ==========
+const i18n = {
+  ru: { title:"Заработать с ИИ", tab_jobs:"Вакансии", tab_skills:"Навыки", tab_scam:"Анти-скам", tab_plan:"План",
+    guide_btn:"План 30 дней",
+    support_title:"🤝 ПОДДЕРЖАТЬ ПРОЕКТ 💙", support_desc:"Приложение бесплатное. Было и останется.<br>Поддержка:",
+    catalog_link:"🌟 Каталог Anti-AI Shield", footer:"Анти-ИИ | 100% офлайн | Честные способы заработка",
+    btn_check:"🔍 Проверить", checklist_title:"✅ Чек-лист безопасности",
+    scam_safe:"✅ Безопасно", scam_warning:"⚠️ Подозрительно", scam_danger:"🚨 СКАМ!",
+    skill_python:"Python", skill_ai:"AI/ML", skill_qwen:"Qwen API"
+  },
+  en: { title:"Earn with AI", tab_jobs:"Jobs", tab_skills:"Skills", tab_scam:"Anti-Scam", tab_plan:"Plan",
+    guide_btn:"30-Day Plan",
+    support_title:"🤝 SUPPORT PROJECT 💙", support_desc:"Free forever. Was and will be.<br>Support:",
+    catalog_link:"🌟 Anti-AI Shield Catalog", footer:"Anti-AI | 100% Offline | Honest Ways to Earn",
+    btn_check:"🔍 Check", checklist_title:"✅ Safety Checklist",
+    scam_safe:"✅ Safe", scam_warning:"⚠️ Suspicious", scam_danger:"🚨 SCAM!",
+    skill_python:"Python", skill_ai:"AI/ML", skill_qwen:"Qwen API"
+  }
+};
+
+// ========== 🧠 STATE ==========
+let currentLang = localStorage.getItem('ai_earn_lang') || 'ru';
+let skills = JSON.parse(localStorage.getItem('ai_earn_skills')) || DATA.skills;
+let plan = JSON.parse(localStorage.getItem('ai_earn_plan')) || DATA.dayPlan;
+let cachedJobs = JSON.parse(localStorage.getItem('ai_earn_jobs')) || STATIC_JOBS;
+let lastUpdateTime = localStorage.getItem('ai_earn_jobs_time') || 0;
+
+function saveState() {
+  localStorage.setItem('ai_earn_skills', JSON.stringify(skills));
+  localStorage.setItem('ai_earn_plan', JSON.stringify(plan));
+  localStorage.setItem('ai_earn_jobs', JSON.stringify(cachedJobs));
+  localStorage.setItem('ai_earn_jobs_time', lastUpdateTime.toString());
+}
+
+// ========== 🔄 LIVE JOBS API ==========
+async function fetchLiveJobs() {
+  const now = Date.now();
+  const fiveMinutes = 5 * 60 * 1000;
+  
+  // Check if cache is fresh
+  if(now - lastUpdateTime < fiveMinutes && cachedJobs.length > 0) {
+    renderJobs(cachedJobs);
+    updateLastUpdate();
+    return;
+  }
+  
+  // Show loading
+  document.getElementById('jobsContainer').innerHTML = `
+    <div class="loading-skeleton"></div>
+    <div class="loading-skeleton"></div>
+    <div class="loading-skeleton"></div>
+  `;
+  
+  try {
+    // Try multiple sources
+    const jobs = await Promise.race([
+      fetchGitHubJobs(),
+      fetchMockAPI(),
+      timeout(5000)
+    ]);
+    
+    if(jobs && jobs.length > 0) {
+      cachedJobs = jobs;
+      lastUpdateTime = now;
+      saveState();
+    }
+    
+    renderJobs(cachedJobs);
+    updateLastUpdate();
+  } catch(error) {
+    console.log('Using cached jobs:', error);
+    renderJobs(cachedJobs);
+    updateLastUpdate();
+  }
+}
+
+async function fetchGitHubJobs() {
+  const response = await fetch('https://jobs.github.com/positions.json?search=ai+machine+learning&pages=1');
+  const data = await response.json();
+  return data.slice(0, 5).map(job => ({
+    title: job.title,
+    company: job.company,
+    salary: job.salary || "Negotiable",
+    location: job.location,
+    tags: job.tags || [],
+    type: job.type.toLowerCase(),
+    posted: timeAgo(new Date(job.created_at)),
+    url: job.url
+  }));
+}
+
+async function fetchMockAPI() {
+  // Fallback mock API
+  return STATIC_JOBS;
+}
+
+function timeout(ms) {
+  return new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), ms));
+}
+
+function timeAgo(date) {
+  const seconds = Math.floor((new Date() - date) / 1000);
+  let interval = Math.floor(seconds / 31536000);
+  if(interval >= 1) return interval + " лет назад";
+  interval = Math.floor(seconds / 2592000);
+  if(interval >= 1) return interval + " мес назад";
+  interval = Math.floor(seconds / 86400);
+  if(interval >= 1) return interval + " дн назад";
+  interval = Math.floor(seconds / 3600);
+  if(interval >= 1) return interval + " ч назад";
+  interval = Math.floor(seconds / 60);
+  if(interval >= 1) return interval + " мин назад";
+  return "Только что";
+}
+
+function updateLastUpdate() {
+  const indicator = document.getElementById('lastUpdate');
+  if(lastUpdateTime > 0) {
+    const date = new Date(lastUpdateTime);
+    indicator.textContent = `Обновлено: ${date.toLocaleTimeString()}`;
+  } else {
+    indicator.textContent = 'Офлайн режим';
+  }
+}
+
+function forceRefreshJobs() {
+  const btn = document.getElementById('refreshBtn');
+  btn.classList.add('loading');
+  lastUpdateTime = 0; // Force refresh
+  fetchLiveJobs().then(() => btn.classList.remove('loading'));
+}
+
+// ========== 🎨 RENDERERS ==========
+function t(key) { return i18n[currentLang][key] || key; }
+function applyLang() {
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.innerHTML = t(el.getAttribute('data-i18n')); });
+  document.getElementById('langBtn').textContent = currentLang === 'ru' ? '🌐 EN' : '🌐 RU';
+  renderJobs(cachedJobs); renderSkills(); renderChecklist(); renderPlan();
+}
+function toggleLang() { currentLang = currentLang==='ru'?'en':'ru'; localStorage.setItem('ai_earn_lang',currentLang); applyLang(); }
+function switchTab(id) {
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelector(`.tab-btn[data-tab="${id}"]`).classList.add('active');
+}
+
+function renderJobs(jobs) {
+  const box = document.getElementById('jobsContainer');
+  const countEl = document.getElementById('jobsCount');
+  box.innerHTML = '';
+  countEl.textContent = `${jobs.length} вакансий`;
+  
+  jobs.forEach(job => {
+    const tagsHtml = (job.tags || []).map(tag => `<span class="salary-tag">${tag}</span>`).join('');
+    const remoteTag = job.location.toLowerCase().includes('remote') ? '<span class="remote-tag">🌍 Remote</span>' : '';
+    const urlAttr = job.url ? `onclick="window.open('${job.url}','_blank')"` : '';
+    
+    box.innerHTML += `
+      <div class="job-card" ${urlAttr} style="${job.url?'cursor:pointer':''}">
+        <div class="job-title">${job.title}</div>
+        <div class="job-company">${job.company} • ${job.location}</div>
+        <div style="margin:6px 0;">${tagsHtml} ${remoteTag}</div>
+        <div class="job-meta">
+          <span>💵 ${job.salary}</span>
+          <span>${job.type==='full'?'📌 Full-time':job.type==='part'?'⏱ Part-time':'💼 Freelance'}</span>
+          <span>🕐 ${job.posted || 'Recently'}</span>
+        </div>
+      </div>`;
+  });
+}
+
+function renderSkills() {
+  const box = document.getElementById('skillsContainer'); box.innerHTML = '';
+  skills.forEach((skill, idx) => {
+    box.innerHTML += `
+      <div class="skill-item">
+        <div class="skill-label">
+          <span>${skill.name}</span>
+          <span style="color:${skill.priority==='high'? 'var(--gold)':'var(--muted)'}">${skill.priority==='high'?'🔥':''} ${skill.level}%</span>
+        </div>
+        <div class="skill-bar">
+          <div class="skill-fill" style="width:${skill.level}%; background:${skill.priority==='high'?'linear-gradient(90deg, var(--gold), var(--accent))':'var(--muted)'}"></div>
+        </div>
+      </div>`;
+  });
+}
+
+function renderChecklist() {
+  const box = document.getElementById('safetyCheckList'); box.innerHTML = '';
+  DATA.safetyChecklist.forEach(item => {
+    const txt = currentLang==='ru'? item.ru : item.en;
+    box.innerHTML += `<div class="checklist-item"><input type="checkbox" id="${item.id}" onchange="this.parentElement.classList.toggle('completed')"><label for="${item.id}">${txt}</label></div>`;
+  });
+}
+
+function renderPlan() {
+  const box = document.getElementById('dayPlanContainer'); box.innerHTML = '';
+  plan.forEach((day, idx) => {
+    box.innerHTML += `
+      <div class="checklist-item ${day.done?'completed':''}">
+        <input type="checkbox" id="day${day.day}" ${day.done?'checked':''} onchange="toggleDay(${idx})">
+        <label for="day${day.day}"><b>День ${day.day}:</b> ${day.task}</label>
+      </div>`;
+  });
+}
+
+// ========== 🛠️ SKILL TRACKER ==========
+function addSkill(type) {
+  const skillMap = { python:0, ai:1, qwen:2 };
+  const idx = skillMap[type];
+  if(skills[idx].level < 100) {
+    skills[idx].level = Math.min(100, skills[idx].level + 10);
+    saveState(); renderSkills();
+    updateSkillBars();
+  }
+}
+
+function updateSkillBars() {
+  document.getElementById('bar-python').style.width = skills[0].level + '%';
+  document.getElementById('skill-python').textContent = skills[0].level + '%';
+  document.getElementById('bar-ai').style.width = skills[1].level + '%';
+  document.getElementById('skill-ai').textContent = skills[1].level + '%';
+  document.getElementById('bar-qwen').style.width = skills[2].level + '%';
+  document.getElementById('skill-qwen').textContent = skills[2].level + '%';
+}
+
+// ========== 🛡️ SCAM DETECTOR ==========
+function checkScam() {
+  const text = document.getElementById('scamInput').value;
+  if(!text) return;
+  
+  let risks = [], riskLevel = 'safe';
+  DATA.scamPatterns.forEach(pattern => {
+    if(pattern.pattern.test(text)) {
+      risks.push(pattern);
+      if(pattern.risk === 'high') riskLevel = 'danger';
+      else if(pattern.risk === 'medium' && riskLevel !== 'danger') riskLevel = 'warning';
+    }
+  });
+  
+  const box = document.getElementById('scamBadges'); box.innerHTML = '';
+  const title = document.getElementById('scamTitle');
+  const analysis = document.getElementById('scamAnalysis');
+  
+  if(risks.length === 0) {
+    title.textContent = t('scam_safe');
+    title.style.color = 'var(--success)';
+    box.innerHTML = `<span class="risk-badge safe">${t('scam_safe')}</span>`;
+    analysis.textContent = 'Вакансия выглядит безопасно. Но всё равно проверьте компанию!';
+  } else {
+    title.textContent = riskLevel === 'danger' ? t('scam_danger') : t('scam_warning');
+    title.style.color = riskLevel === 'danger' ? 'var(--danger)' : 'var(--warning)';
+    risks.forEach(r => {
+      box.innerHTML += `<span class="risk-badge ${r.risk==='high'?'high':'med'}">${r.text}</span>`;
+    });
+    analysis.textContent = `Найдено ${risks.length} красных флагов. Будьте осторожны!`;
+  }
+  
+  document.getElementById('scamResult').style.display = 'block';
+}
+
+function clearScam() {
+  document.getElementById('scamInput').value = '';
+  document.getElementById('scamResult').style.display = 'none';
+}
+
+// ========== 📅 PLAN TRACKER ==========
+function toggleDay(idx) {
+  plan[idx].done = !plan[idx].done;
+  saveState(); renderPlan();
+}
+
+function markDayComplete() {
+  const undone = plan.findIndex(d => !d.done);
+  if(undone !== -1) {
+    plan[undone].done = true;
+    saveState(); renderPlan();
+  }
+}
+
+function resetPlan() {
+  if(confirm('Сбросить весь прогресс?')) {
+    plan = DATA.dayPlan.map(d => ({...d, done: false}));
+    saveState(); renderPlan();
+  }
+}
+
+function showQuickStart() {
+  alert('1. Откройте вкладку 📚 Навыки\n2. Начните с Python (кнопка + Python)\n3. Изучайте по 10% в день\n4. Через 10 дней — первый проект!');
+}
+
+// ========== UTILS ==========
+function copyPhone() { navigator.clipboard.writeText('89202275676').then(()=>alert(t('scam_safe'))); }
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ========== 🚀 INIT ==========
+document.addEventListener('DOMContentLoaded', ()=>{
+  applyLang();
+  updateSkillBars();
+  fetchLiveJobs(); // Fetch jobs on load
+  setInterval(fetchLiveJobs, 5 * 60 * 1000); // Auto-refresh every 5 minutes
+  document.querySelectorAll('.tab-btn').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
+});
+</script>
+</body>
+</html>
